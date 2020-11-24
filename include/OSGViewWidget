@@ -1,0 +1,28 @@
+#ifndef _OSGVIEWWIDGET_H_
+#define _OSGVIEWWIDGET_H_
+
+#include "osgQOpenGL/osgQOpenGLWidget"
+
+namespace osg
+{
+    class Node;
+}
+
+
+class  OsgViewerWidget : public osgQOpenGLWidget
+{
+    Q_OBJECT
+
+public:
+    OsgViewerWidget(QWidget* parent, osg::Node* scene = 0L);
+
+    virtual ~OsgViewerWidget();   
+
+protected:
+    void initializeGL() override;
+
+    void CreateViewer();
+};
+
+
+#endif

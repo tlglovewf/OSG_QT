@@ -13,6 +13,7 @@ IF ( Qt5Widgets_FOUND )
         ${HEADER_PATH}/osgQOpenGLWidget
         ${HEADER_PATH}/osgQOpenGLWindow
         ${HEADER_PATH}/OSGRenderer
+        ${HEADER_PATH}/../OSGViewWidget
     )
 
     qt5_wrap_cpp(SOURCES_H_MOC ${SOURCE_H} #[[OPTIONS ${MOC_OPTIONS}]])
@@ -26,6 +27,7 @@ IF ( Qt5Widgets_FOUND )
         osgQOpenGLWidget.cpp
         osgQOpenGLWindow.cpp
         OSGRenderer.cpp
+        OSGViewWidget.cpp
         ${SOURCES_H_MOC}
         ${OPENSCENEGRAPH_VERSIONINFO_RC}
     )
