@@ -25,12 +25,12 @@ ELSE()
 ENDIF()
 # SETUP_EXAMPLE(${EXAMPLE_NAME})
 message("show " ${TARGET_LIBRARIES})
-add_executable(example_${EXAMPLE_NAME} ${TARGET_SRC})
+# add_executable(example_${EXAMPLE_NAME} ${TARGET_SRC})
 
-target_link_libraries(example_${EXAMPLE_NAME} osgQOpenGL)
+# target_link_libraries(example_${EXAMPLE_NAME} osgQOpenGL)
 
-target_link_libraries(example_${EXAMPLE_NAME} ${TARGET_LIBRARIES})
+# target_link_libraries(example_${EXAMPLE_NAME} ${TARGET_LIBRARIES})
 
-IF ( Qt5Widgets_FOUND )
-    qt5_use_modules( example_${EXAMPLE_NAME} Widgets OpenGL )
-ENDIF( Qt5Widgets_FOUND )
+# IF ( Qt5Widgets_FOUND )
+#     qt5_use_modules( example_${EXAMPLE_NAME} Widgets OpenGL )
+# ENDIF( Qt5Widgets_FOUND )

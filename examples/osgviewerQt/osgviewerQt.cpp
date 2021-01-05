@@ -14,9 +14,10 @@
 #include <osgDB/ReadFile>
 #include <osgUtil/Optimizer>
 #include <osg/CoordinateSystemNode>
-
+#include <osg/MatrixTransform> 
 #include <osg/Switch>
 #include <osg/Types>
+#include <osg/BlendFunc>
 #include <osgText/Text>
 
 #include <osgViewer/Viewer>
@@ -122,7 +123,7 @@ int main( int argc, char** argv )
         }
 
         std::string device;
-
+        
         while(arguments.read("--device", device))
         {
             osg::ref_ptr<osgGA::Device> dev = osgDB::readRefFile<osgGA::Device>(device);
@@ -132,7 +133,6 @@ int main( int argc, char** argv )
                 widget.getOsgViewer()->addDevice(dev);
             }
         }
-
         // set up the camera manipulators.
         {
             osg::ref_ptr<osgGA::KeySwitchMatrixManipulator> keyswitchManipulator = new osgGA::KeySwitchMatrixManipulator;
@@ -194,14 +194,30 @@ int main( int argc, char** argv )
         // add the screen capture handler
         widget.getOsgViewer()->addEventHandler(new osgViewer::ScreenCaptureHandler);
 
+
+
         // load the data
         osg::ref_ptr<osg::Node> loadedModel = osgDB::readRefNodeFiles(arguments);
+        osg::ref_ptr<osg::MatrixTransform> trans = new osg::MatrixTransform;
+        trans->setMatrix(osg::Matrix::translate(0, 0, 10)) ;
+        
 
+        osg::ref_ptr<osg::MatrixTransform> rot = new osg::MatrixTransform;
+        rot->setMatrix(osg::Matrix::rotate(osg::DegreesToRadians(30.0),osg::Vec3d(0,0,1)));
         if(!loadedModel)
         {
             std::cout << arguments.getApplicationName() << ": No data loaded" << std::endl;
             return 1;
         }
+        trans->addChild(loadedModel);
+        rot->addChild(loadedModel);
+        //开启融合操作模式
+	    loadedModel->getOrCreateStateSet()->setMode(GL_BLEND, osg::StateAttribute::ON);
+	    //设置渲染模式
+	    // loadedModel->getOrCreateStateSet()->setRenderingHint(osg::StateSet::TRANSPARENT_BIN);
+        osg::ref_ptr<osg::BlendFunc> fn = new osg::BlendFunc();
+        fn->setFunction(osg::BlendFunc::SRC_ALPHA, osg::BlendFunc::ONE_MINUS_SRC_ALPHA);
+        loadedModel->getOrCreateStateSet()->setAttributeAndModes(fn, osg::StateAttribute::ON);
 
         // any option left unread are converted into errors to write out later.
         arguments.reportRemainingOptionsAsUnrecognized();
@@ -213,13 +229,22 @@ int main( int argc, char** argv )
             return 1;
         }
 
-
+        osg::ref_ptr<osg::Group> root = new osg::Group;
+        root->addChild(rot);
+        root->addChild(trans);
         // optimize the scene graph, remove redundant nodes and state etc.
         osgUtil::Optimizer optimizer;
-        optimizer.optimize(loadedModel);
+        optimizer.optimize(root);
 
-        widget.getOsgViewer()->setSceneData(loadedModel);
+        widget.getOsgViewer()->getCamera()->setComputeNearFarMode(osg::Camera::COMPUTE_NEAR_FAR_USING_PRIMITIVES);
 
+        // widget.getOsgViewer()->getCamera()->setNearFarRatio(0.00001);
+
+        // widget.getOsgViewer()->setSceneData(loadedModel);
+        widget.getOsgViewer()->setSceneData(root);
+        
+        osg::DisplaySettings::instance()->setNumMultiSamples(4);
+    
         //        widget.getOsgViewer()->realize();
 
         return 0;

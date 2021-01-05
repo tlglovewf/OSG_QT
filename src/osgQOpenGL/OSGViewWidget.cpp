@@ -32,10 +32,10 @@ void OsgViewerWidget::initializeGL()
         // m_renderer->setCameraManipulator(new osgGA::TrackballManipulator());
         // m_renderer->setCameraManipulator(new osgGA::OrbitManipulator());
         m_renderer->getCamera()->setComputeNearFarMode(osg::CullSettings::COMPUTE_NEAR_FAR_USING_BOUNDING_VOLUMES);
-
-        m_renderer->setCameraManipulator(new MyCameraManipulator(NULL));
-
-        
+        if(NULL == m_renderer->getCameraManipulator())
+        {
+            m_renderer->setCameraManipulator(new TestCameraManipulator(NULL));
+        }
     }
 }
 
@@ -55,7 +55,7 @@ void OsgViewerWidget::CreateViewer()
 }
 
 
-MyCameraManipulator::MyCameraManipulator( osg::Node *node):_root(node)
+TestCameraManipulator::TestCameraManipulator( osg::Node *node):_root(node)
 {
     computeHomePosition();
     _eye = _homeEye;
@@ -66,7 +66,7 @@ MyCameraManipulator::MyCameraManipulator( osg::Node *node):_root(node)
 }
 
 static bool bol = false;
-osg::Matrixd MyCameraManipulator::getInverseMatrix()const
+osg::Matrixd TestCameraManipulator::getInverseMatrix()const
 {
     osg::Matrix mat;
     // static 
@@ -82,14 +82,14 @@ osg::Matrixd MyCameraManipulator::getInverseMatrix()const
     return mat;
 }
 
-bool MyCameraManipulator::handle(const osgGA::GUIEventAdapter& ea,osgGA::GUIActionAdapter& us)
+bool TestCameraManipulator::handle(const osgGA::GUIEventAdapter& ea,osgGA::GUIActionAdapter& us)
 {
     switch (ea.getEventType())
     {       
     case osgGA::GUIEventAdapter::PUSH:
         if(ea.getButtonMask() == osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON)
         {
-            bol = true;
+            bol = true; 
         }
         else if(ea.getButtonMask() == osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON)
         {

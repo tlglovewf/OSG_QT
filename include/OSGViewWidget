@@ -30,11 +30,11 @@ protected:
 };
 
 
-class MyCameraManipulator : public osgGA::CameraManipulator
+class TestCameraManipulator : public osgGA::CameraManipulator
 {
 public:
-    MyCameraManipulator(osg::Node *node);
-    ~MyCameraManipulator() = default;
+    TestCameraManipulator(osg::Node *node);
+    ~TestCameraManipulator() = default;
 
     virtual void setByMatrix(const osg::Matrixd &matrix){}
     virtual void setByInverseMatrix(const osg::Matrixd &matrix){}
