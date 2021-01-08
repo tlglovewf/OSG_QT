@@ -9,6 +9,7 @@ add_library(${EXTLIBS} SHARED SceneCameraManipulator.cpp)
 
 SET(TARGET_LIBRARIES
     libosgd.so
+    libosgFX.so
     libosgGAd.so
     libosgViewerd.so
     libosgUtild.so
@@ -56,3 +57,12 @@ build_target(osgLight testLight.cpp)
 
 ### exp for how to use osg move
 build_target(osgMove testMove.cpp)
+
+### exp for how to build skybox
+build_target(osgSky testSkyBox.cpp)
+
+### exp for how to build model
+build_target(osgModel testModel.cpp)
+
+### exp for how to build projection obj
+build_target(osgProj testProjection.cpp)
