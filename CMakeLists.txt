@@ -111,8 +111,13 @@ ENDIF()
 # We want to build SONAMES shared librariess
 SET(OPENSCENEGRAPH_SONAMES TRUE)
 
-SET(OpenSceneGraph_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+SET(OpenSceneGraph_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../OpenSceneGraph/")
+message("Osg Path " ${OpenSceneGraph_SOURCE_DIR})
 
+include_directories(${OpenSceneGraph_SOURCE_DIR}/include)
+include_directories(${OpenSceneGraph_SOURCE_DIR}/build/include)
+link_directories("${OpenSceneGraph_SOURCE_DIR}/build/lib/")
+message("Link Path : ${OpenSceneGraph_SOURCE_DIR}/build/lib/")
 # We have some custom .cmake scripts not in the official distribution.
 # Maybe this can be used override existing behavior if needed?
 SET(CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/CMakeModules;${CMAKE_MODULE_PATH}")
@@ -673,7 +678,7 @@ ENDIF()
 
 # OSG Core
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-link_directories("/media/tu/Work/Sources/osgearth/fsosgearth/OpenSceneGraph/build/lib")
+
 ADD_SUBDIRECTORY(src)
 
 IF   (BUILD_OSG_EXAMPLES)

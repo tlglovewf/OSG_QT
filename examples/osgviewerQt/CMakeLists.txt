@@ -3,12 +3,12 @@ SET( TARGET_SRC
 )
 
 SET(TARGET_LIBRARIES_VARS
-    libosgd.so
-    libosgGAd.so
-    libosgViewerd.so
-    libosgUtild.so
-    libosgDBd.so
-    libOpenThreadsd.so
+    libosg.so
+    libosgGA.so
+    libosgViewer.so
+    libosgUtil.so
+    libosgDB.so
+    libOpenThreads.so
 )
 
 

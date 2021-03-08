@@ -8,7 +8,7 @@
             "name": "OsgQtViewer",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/bin/example_osgMove",
+            "program": "${workspaceFolder}/build/bin/example_osgSky",
             "args": ["/media/tu/Work/Datas/OpenSceneGraph-Data/cow.osg"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/",

@@ -35,12 +35,12 @@ IF ( Qt5Widgets_FOUND )
     SET(TARGET_LIBRARIES Qt5::Widgets Qt5::OpenGL)
 
     SET(TARGET_LIBRARIES_VARS
-    libosgd.so
-    libosgGAd.so
-    libosgViewerd.so
-    libosgUtild.so
-    libosgDBd.so
-    libOpenThreadsd.so
+    libosg.so
+    libosgGA.so
+    libosgViewer.so
+    libosgUtil.so
+    libosgDB.so
+    libOpenThreads.so
 )
 
     # SETUP_LIBRARY(${LIB_NAME})

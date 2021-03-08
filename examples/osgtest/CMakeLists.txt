@@ -8,14 +8,16 @@ SET(EXTLIBS "extlibs")
 add_library(${EXTLIBS} SHARED SceneCameraManipulator.cpp)
 
 SET(TARGET_LIBRARIES
-    libosgd.so
+    libosg.so
     libosgFX.so
-    libosgGAd.so
-    libosgViewerd.so
-    libosgUtild.so
-    libosgTextd.so
-    libosgDBd.so
-    libOpenThreadsd.so
+    libosgGA.so
+    libosgViewer.so
+    libosgUtil.so
+    libosgText.so
+    libosgDB.so
+    libosgUI.so
+    libosgWidget.so
+    libOpenThreads.so
     ${EXTLIBS}
 )
 IF ( NOT Qt5Widgets_FOUND )
@@ -66,3 +68,9 @@ build_target(osgModel testModel.cpp)
 
 ### exp for how to build projection obj
 build_target(osgProj testProjection.cpp)
+
+### exp for how to use osg widget
+build_target(osgUI testWidget.cpp)
+
+### exp for how to use camera
+build_target(osgCamera testCamera.cpp)

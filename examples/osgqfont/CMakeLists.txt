@@ -4,13 +4,13 @@
 SET(TARGET_SRC osgqfont.cpp )
 # SET(TARGET_LIBRARIES  ${OPENSCENEGRAPH_LIBRARIES})
 SET(TARGET_LIBRARIES
-    libosgd.so
-    libosgGAd.so
-    libosgViewerd.so
-    libosgUtild.so
-    libosgTextd.so
-    libosgDBd.so
-    libOpenThreadsd.so
+    libosg.so
+    libosgGA.so
+    libosgViewer.so
+    libosgUtil.so
+    libosgText.so
+    libosgDB.so
+    libOpenThreads.so
 )
 IF ( NOT Qt5Widgets_FOUND )
     INCLUDE_DIRECTORIES( ${QT_INCLUDE_DIR} ${QT_QTCORE_INCLUDE_DIR} ${QT_QTGUI_INCLUDE_DIR} ${QT_QTOPENGL_INCLUDE_DIR} )
