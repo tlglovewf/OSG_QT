@@ -117,6 +117,9 @@ message("Osg Path " ${OpenSceneGraph_SOURCE_DIR})
 include_directories(${OpenSceneGraph_SOURCE_DIR}/include)
 include_directories(${OpenSceneGraph_SOURCE_DIR}/build/include)
 link_directories("${OpenSceneGraph_SOURCE_DIR}/build/lib/")
+if(WIN32)
+    link_directories("${OpenSceneGraph_SOURCE_DIR}/build/lib/osgPlugins-3.6.5")
+endif()
 message("Link Path : ${OpenSceneGraph_SOURCE_DIR}/build/lib/")
 # We have some custom .cmake scripts not in the official distribution.
 # Maybe this can be used override existing behavior if needed?
@@ -275,9 +278,6 @@ ENDIF()
 
 
 INCLUDE_DIRECTORIES(
-#    ${OPENSCENEGRAPH_INCLUDE_DIRS}
-    /media/tu/Work/Sources/osgearth/fsosgearth/OpenSceneGraph/include
-    /media/tu/Work/Sources/osgearth/fsosgearth/OpenSceneGraph/build/include
     ${CMAKE_CURRENT_LIST_DIR}/include
     ${CMAKE_CURRENT_BINARY_DIR}/src
     ${OPENGL_INCLUDE_DIR}
@@ -449,7 +449,7 @@ SET(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "add a postfix, usually d on windows")
 SET(CMAKE_RELEASE_POSTFIX "" CACHE STRING "add a postfix, usually empty on windows")
 SET(CMAKE_RELWITHDEBINFO_POSTFIX "rd" CACHE STRING "add a postfix, usually empty on windows")
 SET(CMAKE_MINSIZEREL_POSTFIX "s" CACHE STRING "add a postfix, usually empty on windows")
-
+SET(CMKAE_BUILD_TYPE Debug)
 # Set the build postfix extension according to what configuration is being built.
 IF (CMAKE_BUILD_TYPE MATCHES "Release")
     SET(CMAKE_BUILD_POSTFIX "${CMAKE_RELEASE_POSTFIX}")

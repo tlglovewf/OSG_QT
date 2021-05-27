@@ -5,21 +5,52 @@
 
 SET(EXTLIBS "extlibs")
 
-add_library(${EXTLIBS} SHARED SceneCameraManipulator.cpp)
+ if(WIN32)
+    if(${CMKAE_BUILD_TYPE} MATCHES  "Debug")
+        SET(TARGET_LIBRARIES
+            osgd.lib
+            osgFXd.lib
+            osgGAd.lib
+            osgViewerd.lib
+            osgUtild.lib
+            osgTextd.lib
+            osgDBd.lib
+            osgUId.lib
+            osgWidgetd.lib
+            OpenThreadsd.lib
+        )
+     else()
+        SET(TARGET_LIBRARIES
+            osg.lib
+            osgFX.lib
+            osgGA.lib
+            osgViewer.lib
+            osgUtil.lib
+            osgText.lib
+            osgDB.lib
+            osgUI.lib
+            osgWidget.lib
+            OpenThreads.lib
+        )
+     endif()
+ else()
+    SET(TARGET_LIBRARIES
+        libosg.so
+        libosgFX.so
+        libosgGA.so
+        libosgViewer.so
+        libosgUtil.so
+        libosgText.so
+        libosgDB.so
+        libosgUI.so
+        libosgWidget.so
+        libOpenThreads.so
+    )
+endif()
+add_library(${EXTLIBS} STATIC SceneCameraManipulator.cpp)
+SET_TARGET_PROPERTIES(${EXTLIBS} PROPERTIES FOLDER "Core")
+LIST(APPEND  TARGET_LIBRARIES     ${EXTLIBS})
 
-SET(TARGET_LIBRARIES
-    libosg.so
-    libosgFX.so
-    libosgGA.so
-    libosgViewer.so
-    libosgUtil.so
-    libosgText.so
-    libosgDB.so
-    libosgUI.so
-    libosgWidget.so
-    libOpenThreads.so
-    ${EXTLIBS}
-)
 IF ( NOT Qt5Widgets_FOUND )
     INCLUDE_DIRECTORIES( ${QT_INCLUDE_DIR} ${QT_QTCORE_INCLUDE_DIR} ${QT_QTGUI_INCLUDE_DIR} ${QT_QTOPENGL_INCLUDE_DIR} )
     SET(TARGET_EXTERNAL_LIBRARIES ${QT_QTCORE_LIBRARY_RELEASE} ${QT_QTGUI_LIBRARY_RELEASE} ${QT_QTOPENGL_LIBRARY_RELEASE} )
@@ -44,6 +75,10 @@ function(build_target)
     
     target_link_libraries(example_${EXAMPLE_NAME1} ${TARGET_LIBRARIES})
     
+    SET_TARGET_PROPERTIES(example_${EXAMPLE_NAME1} PROPERTIES FOLDER "EXAMPLES")
+
+    #Set_Target_Properties(example_${EXAMPLE_NAME1} PROPERTIES LINK_FLAGS_RELEASE "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
+    Set_Target_Properties(example_${EXAMPLE_NAME1} PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup")
     IF ( Qt5Widgets_FOUND )
         qt5_use_modules( example_${EXAMPLE_NAME1} Widgets OpenGL )
     ENDIF( Qt5Widgets_FOUND )
@@ -74,3 +109,6 @@ build_target(osgUI testWidget.cpp)
 
 ### exp for how to use camera
 build_target(osgCamera testCamera.cpp)
+
+###exp for qt viewer
+build_target(osgQtViewer testQtViewer.cpp)

@@ -33,16 +33,34 @@ IF ( Qt5Widgets_FOUND )
     )
 
     SET(TARGET_LIBRARIES Qt5::Widgets Qt5::OpenGL)
-
+ if(WIN32)
+    if(${CMKAE_BUILD_TYPE} MATCHES  "Debug")
+        SET(TARGET_LIBRARIES_VARS
+            osgd.lib
+            osgGAd.lib
+            osgViewerd.lib
+            osgUtild.lib
+            osgDBd.lib
+            OpenThreadsd.lib)
+     else()
+        SET(TARGET_LIBRARIES_VARS
+            osg.lib
+            osgGA.lib
+            osgViewer.lib
+            osgUtil.lib
+            osgDB.lib
+            OpenThreads.lib)
+     endif()
+ else()
     SET(TARGET_LIBRARIES_VARS
-    libosg.so
-    libosgGA.so
-    libosgViewer.so
-    libosgUtil.so
-    libosgDB.so
-    libOpenThreads.so
-)
-
+        libosg.so
+        libosgGA.so
+        libosgViewer.so
+        libosgUtil.so
+        libosgDB.so
+        libOpenThreads.so
+    )
+endif()
     # SETUP_LIBRARY(${LIB_NAME})
     add_library(${LIB_NAME} ${TARGET_SRC})
     target_link_libraries(${LIB_NAME} ${TARGET_LIBRARIES_VARS} ${TARGET_LIBRARIES})

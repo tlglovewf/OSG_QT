@@ -8,7 +8,6 @@ IF(DYNAMIC_OPENSCENEGRAPH)
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
-ADD_SUBDIRECTORY(osgviewerQt)
 ADD_SUBDIRECTORY(osgqfont)
 ADD_SUBDIRECTORY(osgtest)
 ENDIF()
