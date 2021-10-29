@@ -112,3 +112,6 @@ build_target(osgCamera testCamera.cpp)
 
 ###exp for qt viewer
 build_target(osgQtViewer testQtViewer.cpp)
+
+###exp for gpstrace play
+build_target(osgTraceDisplay testTraceDisplay.cpp)
