@@ -11,6 +11,9 @@
 #include "OSGViewWidget"
 #include "SceneCameraManipulator.h"
 
+#include <QPushButton>
+#include <QMainWindow>
+#include <QLayout>
 class Axis : public osg::Geometry
 {
 public:
@@ -62,7 +65,6 @@ protected:
 
 protected:
 };
-
 
 class Chess : public osg::Geometry
 {
@@ -118,8 +120,6 @@ protected:
 protected:
 };
 
-
-
 int main(int argc, char **argv)
 {   
     QApplication a(argc, argv);
@@ -135,7 +135,20 @@ int main(int argc, char **argv)
 
     osg::DisplaySettings::instance()->setNumMultiSamples(4);
 
+	QMainWindow main;
+	QVBoxLayout layer;
+	//main.centralWidget()->setLayout(&layer);
+	main.setCentralWidget(new QWidget);
+	main.centralWidget()->setLayout(&layer);
+	//layer.setGeometry(main.geometry());
+	main.setWindowTitle("hello world");
+
     OsgViewerWidget viewer(NULL, root);
+
+	QPushButton *button = new QPushButton();
+	button->setText("world");
+	layer.addWidget(button);
+	layer.addWidget(&viewer);
 
     viewer.getOsgViewer()->setCameraManipulator(new SceneCamManipulator);
 
@@ -143,7 +156,7 @@ int main(int argc, char **argv)
 
     viewer.getOsgViewer()->getCamera()->getProjectionMatrix().makePerspective(45.0f,ratio,1,1000);
     
-    viewer.show();
+	main.show();
 
     a.exec();
     return 0;
