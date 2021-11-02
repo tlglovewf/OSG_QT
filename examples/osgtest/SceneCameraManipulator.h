@@ -24,7 +24,11 @@ public:
     }
     virtual bool handle(const osgGA::GUIEventAdapter& ea,osgGA::GUIActionAdapter& us);
 
+	//屏幕坐标转世界坐标
+	osg::Vec3 viewToWolrd(osg::ref_ptr<osg::Camera> cam, const osg::Vec3 &viewpt);
 
+	//世界坐标转经纬度坐标
+	osg::Vec3 worldToView(osg::ref_ptr<osg::Camera> cam, const osg::Vec3 &wdpt);
 protected:
     inline void setOrigin()
     {

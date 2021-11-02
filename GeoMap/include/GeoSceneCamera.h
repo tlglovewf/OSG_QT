@@ -2,6 +2,7 @@
 #define _GEOSCENECAMERAMANIPULATOR_H_
 
 #include <osgGA/CameraManipulator>
+#include <osgGA/OrbitManipulator>
 
 
 typedef osg::Vec3 GpsPos; //x:lng  y:lat  z:alt
@@ -74,6 +75,66 @@ protected:
 
 	osg::Matrixd mTrans;	//转换矩阵
 };
+
+
+class COCSGroundManipulator : public osgGA::OrbitManipulator
+{
+	typedef OrbitManipulator inherited;
+public:
+
+	COCSGroundManipulator();
+
+	virtual ~COCSGroundManipulator();
+
+
+	// 见父类
+
+	virtual void setCenter(const osg::Vec3d& center);
+
+	// 见父类
+
+	virtual void setByMatrix(const osg::Matrixd& matrix);
+
+
+	// 见父类
+
+	virtual void zoomModel(const float dy, bool pushForwardIfNeeded = true);
+
+	// 见父类
+
+	virtual bool performMovementLeftMouseButton(const double eventTimeDelta, const double dx, const double dy);
+
+
+	// 见父类
+
+	virtual bool performMovementMiddleMouseButton(const double eventTimeDelta, const double dx, const double dy);
+
+
+	// 见父类
+
+	virtual void panModel(const float dx, const float dy, const float dz = 0.f);
+
+
+	// 见父类
+
+	virtual void rotateTrackball(const float px0, const float py0,
+		const float px1, const float py1, const float scale);
+public:
+	// 地面法向
+	osg::Vec3d GetUpVector() const;
+	void SetUpVector(const osg::Vec3d &vecUp);
+
+	// 最大距离
+	void SetMaxDistance(double dDistance);
+	double GetMaxDistance() const;
+
+private:
+	osg::Vec3d _upVector;	// 垂直地面向上的向量
+
+	double _maxDistance;	// 定义一个最大距离，当超过这个距离，就不在放大了
+
+};
+
 
 #endif
 

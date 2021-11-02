@@ -137,10 +137,10 @@ int main(int argc, char **argv)
 
 	QMainWindow main;
 	QVBoxLayout layer;
-	//main.centralWidget()->setLayout(&layer);
+
 	main.setCentralWidget(new QWidget);
 	main.centralWidget()->setLayout(&layer);
-	//layer.setGeometry(main.geometry());
+
 	main.setWindowTitle("hello world");
 
     OsgViewerWidget viewer(NULL, root);

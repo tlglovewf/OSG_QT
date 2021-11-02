@@ -198,13 +198,18 @@ int main(int argc, char **argv)
 	layer.addWidget(&viewer);
 
 	osg::ref_ptr<GeoSceneCamera> geocam = new GeoSceneCamera;
+	osg::ref_ptr<COCSGroundManipulator>	gcam = new COCSGroundManipulator;
 	center.z() = 1.0f;
 	geocam->setCameraPos(center);
+	gcam->setCenter(center);
 	viewer.getOsgViewer()->setCameraManipulator(geocam);
+	//viewer.getOsgViewer()->setCameraManipulator(gcam);
+ 
 
 	float ratio = viewer.width() / viewer.height();
 
 	viewer.getOsgViewer()->getCamera()->getProjectionMatrix().makePerspective(45.0f, ratio, 1, 1000);
+    
 
 	main.show();
 
