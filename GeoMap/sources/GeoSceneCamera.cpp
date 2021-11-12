@@ -1,5 +1,6 @@
 #include "GeoSceneCamera.h"
-
+#include "osgViewer/Viewer"
+#include <qdebug.h>
 
 void GeoSceneCamera::updateCamera()
 {
@@ -22,17 +23,57 @@ osg::Matrixd GeoSceneCamera::getInverseMatrix()const
 	return osg::Matrixd::inverse(getMatrix());
 }
 
-#include <qdebug.h>
+
+
+
+//屏幕坐标转世界坐标
+osg::Vec3 GeoSceneCamera::viewToWolrd(osg::ref_ptr<osg::Camera> cam, const osg::Vec3 &viewpt)
+{
+	if (cam.valid())
+	{
+		osg::Matrix viewmtrx = cam->getViewMatrix();
+
+		osg::Matrix projmtrx = cam->getProjectionMatrix();
+
+		osg::Matrix vpotmtrx = cam->getViewport()->computeWindowMatrix();
+
+		return viewpt * osg::Matrix::inverse(viewmtrx * projmtrx * vpotmtrx);
+	}
+	else
+	{
+		return osg::Vec3();
+	}
+}
+
+//世界坐标转经纬度坐标
+osg::Vec3 GeoSceneCamera::worldToView(osg::ref_ptr<osg::Camera> cam, const osg::Vec3 &wdpt)
+{
+	if (cam.valid())
+	{
+		osg::Matrix viewmtrx = cam->getViewMatrix();
+
+		osg::Matrix projmtrx = cam->getProjectionMatrix();
+
+		osg::Matrix vpotmtrx = cam->getViewport()->computeWindowMatrix();
+
+		return wdpt * viewmtrx * projmtrx * vpotmtrx;
+	}
+	else
+	{
+		return osg::Vec3();
+	}
+}
 
 //处理事件
 bool GeoSceneCamera::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& us)
 {
+	osgViewer::View *view = dynamic_cast<osgViewer::View*>(&us);
 	switch (ea.getEventType())
 	{
 	case osgGA::GUIEventAdapter::SCROLL:
 	{
 		//constexpr float det =  // 1.0f;
-		float det = 0.2f;
+		float det = mCamPt.z() / 10.0;
 		if (ea.getScrollingMotion() == osgGA::GUIEventAdapter::SCROLL_UP)
 		{//UP
 			mCamPt.z() += det;
@@ -45,6 +86,15 @@ bool GeoSceneCamera::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAd
 		{
 			mCamPt.z() = 0.1;
 		}
+		osg::Camera *cam = view->getCamera();
+		osg::Vec2 temp(ea.getX(), ea.getY());
+		osg::Vec3 pt1 = viewToWolrd(cam, osg::Vec3(temp.x(), temp.y(), 0.0));
+		
+		osg::Vec3 dis = pt1 - mCamPt;
+
+		mCamPt.x() += dis.x()/ 10.0;
+		mCamPt.y() += dis.y()/ 10.0;
+
 		mTrans.makeTranslate(mCamPt);
 	}
 	break;
@@ -142,13 +192,19 @@ bool GeoSceneCamera::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAd
 
 		if (mLftBtnDwn)
 		{
+			osg::Camera *cam = view->getCamera();
 			osg::Vec3 panPt(mCamPt);
 
-			osg::Vec2 det = (temp - mLftPt);
+			osg::Vec3 pt1 = viewToWolrd(cam, osg::Vec3(temp.x(), temp.y(), 0.0));
 
-			panPt.x() = mCamPt.x() - det.x() / (100 * mCamPt.z());
-			panPt.y() = mCamPt.y() - det.y() / (100 * mCamPt.z());
-			qDebug() << det.x() << " " << det.y() << " " <<  mCamPt.z() << endl;
+			osg::Vec3 pt2 = viewToWolrd(cam, osg::Vec3(mLftPt.x(), mLftPt.y(), 0.0));
+
+			osg::Vec3 det = pt1 - pt2;
+			qDebug() << det.x() << " " << det.y() << endl;
+
+			panPt.x() = mCamPt.x() - det.x();
+			panPt.y() = mCamPt.y() - det.y();
+
 			mTrans.makeTranslate(panPt);
 		}
 	}

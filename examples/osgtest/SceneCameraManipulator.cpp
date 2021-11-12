@@ -101,23 +101,6 @@ bool SceneCamManipulator::handle(const osgGA::GUIEventAdapter& ea,osgGA::GUIActi
                     default:
                         break;
                 }
-			/*	if (view)
-				{
-					std::cout << ea.getX() << " " << ea.getY() << " " << std::endl;
-					osg::Camera *cam = view->getCamera();
-
-					osg::Vec3 pt(ea.getX(), ea.getY(), 0);
-
-					osg::Vec3 world = viewToWolrd(cam, pt);
-
-					std::cout << world.x() << " " << world.y() << " " << world.z() << std::endl;
-
-					osg::Vec3 wd(0, 0, 0);
-
-					auto rst = worldToView(cam, wd);
-					std::cout << "-" << rst.x() << " " << rst.y() << " " << rst.z() << std::endl;
-				}*/
-				
             }
             break;
 
