@@ -4,6 +4,7 @@
 # SET(TARGET_LIBRARIES  ${OPENSCENEGRAPH_LIBRARIES})
 
 SET(EXTLIBS "extlibs")
+SET(INTERLIBS "Inter")
 
  if(WIN32)
     if(${CMKAE_BUILD_TYPE} MATCHES  "Debug")
@@ -113,5 +114,25 @@ build_target(osgCamera testCamera.cpp)
 ###exp for qt viewer
 build_target(osgQtViewer testQtViewer.cpp)
 
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../GeoMap/include)
 ###exp for gpstrace play
 build_target(osgTraceDisplay testTraceDisplay.cpp)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/intersectors)
+set(IntSource  
+     intersectors/SVMData.h
+     intersectors/SVMData.cpp
+     intersectors/DraggableWire.h
+     intersectors/DraggableWire.cpp
+     intersectors/EventHandler.h
+     intersectors/EventHandler.cpp
+     intersectors/LineIntersector.h
+     intersectors/LineIntersector.cpp
+     intersectors/PointIntersector.h
+     intersectors/PointIntersector.cpp
+     intersectors/VirtualPlaneIntersector.h
+     intersectors/VirtualPlaneIntersector.cpp)
+
+add_library(${INTERLIBS} STATIC ${IntSource})
+###exp for intersect
+build_target(osgIntersect testIntersect.cpp)
+target_link_libraries(example_osgIntersect ${INTERLIBS})

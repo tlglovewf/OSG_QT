@@ -8,6 +8,12 @@
 #include <osgGA/CameraManipulator>
 #include <osgGA/FirstPersonManipulator>
 #include <osgGA/OrbitManipulator>
+#include <osgFX/OutLine>
+#include <osgUtil/LineSegmentIntersector>
+#include <osg/ShapeDrawable>
+
+#include <osg/LineSegment>
+
 #include "OSGViewWidget"
 //#include "SceneCameraManipulator.h"
 
@@ -17,6 +23,9 @@
 #include <QPushButton>
 #include <QMainWindow>
 #include <QLayout>
+
+#include <QDebug>
+
 class Axis : public osg::Geometry
 {
 public:
@@ -30,7 +39,7 @@ protected:
 	{
 		constexpr float totalLen = 60;
 
-		osg::ref_ptr<osg::Vec3dArray>           vex = new osg::Vec3dArray;
+		osg::ref_ptr<osg::Vec3Array>           vex = new osg::Vec3Array;
 		osg::ref_ptr<osg::Vec4Array>            colors = new osg::Vec4Array;
 		osg::ref_ptr<osg::DrawElementsUByte>    primitiveSet = new osg::DrawElementsUByte(osg::PrimitiveSet::LINES);
 
@@ -70,9 +79,12 @@ protected:
 };
 
 
-const GpsPos testgeos[2] = { GeoSceneCamera::lnglat2mector({116.3277796, 39.8445912, 0.0}),
-							 GeoSceneCamera::lnglat2mector({116.3038648, 39.9167585, 0.0}) };
-GpsPos center = (testgeos[0] + testgeos[1]) / 2.0;
+//const GpsPos testgeos[2] = { GeoSceneCamera::lnglat2mector({116.3277796, 39.8445912, 0.0}),
+//							 GeoSceneCamera::lnglat2mector({116.3038648, 39.9167585, 0.0}) };
+const GpsPos testgeos[2] = {{-1.0, -1.0, 0.0},
+							{ 1.0,  1.0, 0.0} };
+
+GpsPos centerpt = (testgeos[0] + testgeos[1]) / 2.0;
 class TraceLine : public osg::Geometry
 {
 public:
@@ -81,11 +93,26 @@ public:
 		build_mesh();
 	}
 
+	void setColor(const osg::Vec4& color)
+	{
+		osg::Vec4Array* colors = dynamic_cast<osg::Vec4Array*>(_colorArray.get());
+
+		(*colors)[0] = color;
+		colors->dirty();
+		setColorArray(colors);
+		dirtyGLObjects();
+	}
+
+	void highlight()
+	{
+		setColor({ 0.0,1.0,0.0,1.0 });
+	}
 protected:
+
 
 	void build_mesh()
 	{
-		osg::ref_ptr<osg::Vec3dArray>   veices = new osg::Vec3dArray;
+		osg::ref_ptr<osg::Vec3Array>   veices = new osg::Vec3Array;
 		osg::ref_ptr<osg::Vec4Array>    color = new osg::Vec4Array;
 		osg::ref_ptr<osg::DrawElementsUShort> primitiveset = new osg::DrawElementsUShort(osg::PrimitiveSet::LINES);
 
@@ -100,14 +127,27 @@ protected:
 		setVertexArray(veices);
 		setColorArray(color);
 		setColorBinding(osg::Geometry::BIND_PER_VERTEX);
+
+		osg::ref_ptr<osg::Vec4Array> seccolor = new osg::Vec4Array;
+		color->push_back({ 0.0,0.0,1.0,1.0 });
+		setSecondaryColorArray(seccolor);
+		setSecondaryColorBinding(osg::Geometry::BIND_OVERALL);
+
 		addPrimitiveSet(primitiveset);
 
 		osg::ref_ptr<osg::LineWidth> linewidth = new osg::LineWidth(3);
 		this->getOrCreateStateSet()->setAttribute(linewidth, osg::StateAttribute::ON);
 		this->getOrCreateStateSet()->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
 		this->getOrCreateStateSet()->setMode(GL_LINE_SMOOTH, osg::StateAttribute::ON);
-		//this->getOrCreateStateSet()->setAttribute(new osg::Point(5));
+
+		
 	}
+	const osg::Array* getColorArray()const
+	{
+		qDebug() << "error" << endl;
+		return _colorArray.get();
+	}
+
 };
 
 class Chess : public osg::Geometry
@@ -130,22 +170,19 @@ protected:
 		constexpr int   quadsz = (len - 1) * (len - 1);
 		static_assert(len, "len value error.");
 
-		osg::ref_ptr<osg::Vec3dArray>           vex = new osg::Vec3dArray;
+		osg::ref_ptr<osg::Vec3Array>           vex = new osg::Vec3Array;
 		osg::ref_ptr<osg::Vec4Array>            colors = new osg::Vec4Array;
-		osg::ref_ptr<osg::DrawElementsUShort>   primitiveSet = new osg::DrawElementsUShort(osg::PrimitiveSet::LINE_STRIP);
-		for (int i = 0; i <= len; ++i)
-		{
-			float row = -totalLen + i * stride;
+		osg::ref_ptr<osg::DrawElementsUShort>   primitiveSet = new osg::DrawElementsUShort(osg::PrimitiveSet::TRIANGLES);
 
-			for (int j = 0; j <= len; ++j)
-			{
-				float col = -totalLen + j * stride;
-				vex->push_back(osg::Vec3(row, col, 0));
-				colors->push_back(osg::Vec4(1, 0, 0, 1));
-				int index = primitiveSet->size();
-				primitiveSet->push_back(index);
-			}
-		}
+		vex->push_back({ -1,-1,0 });
+		vex->push_back({ 1, 1,0 });
+		vex->push_back({ 1,-1,0 });
+		colors->push_back({ 1.0, 0.0, 0.0, 1.0 });
+		colors->push_back({ 0.0, 1.0, 0.0, 1.0 });
+		colors->push_back({ 0.0, 0.0, 1.0, 1.0 });
+		primitiveSet->push_back(0);
+		primitiveSet->push_back(1);
+		primitiveSet->push_back(2);
 
 		this->setVertexArray(vex);
 		this->setColorArray(colors);
@@ -164,6 +201,67 @@ protected:
 protected:
 };
 
+class ObjectSelectHandler : public osgGA::GUIEventHandler
+{
+public:
+	virtual bool handle(const osgGA::GUIEventAdapter&ea, osgGA::GUIActionAdapter&aa)override
+	{
+		osgViewer::View* view = dynamic_cast<osgViewer::Viewer*>(&aa);
+		if (!view) {
+			return false;
+		}
+		osgGA::GUIEventAdapter::EventType eventType = ea.getEventType(); 
+		switch (eventType) {
+		case osgGA::GUIEventAdapter::PUSH://鼠标按下
+			if (ea.getButton() == osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON) {
+
+				pick(view, { ea.getX(), ea.getY() });
+			}
+			break;
+		case osgGA::GUIEventAdapter::DRAG://鼠标拖动
+
+			break;
+		case osgGA::GUIEventAdapter::RELEASE://鼠标松开
+			if (ea.getButton() == osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON) {
+
+			}
+			break;
+		default:
+			break;
+		}
+
+		return false;
+	}
+
+	void pick(osgViewer::View *viewer, const osg::Vec2 pt)
+	{
+		constexpr float spaclen = 5;
+		osgUtil::PolytopeIntersector *intersector = new osgUtil::PolytopeIntersector(osgUtil::Intersector::WINDOW, pt.x() - spaclen, pt.y() - spaclen, pt.x() + spaclen, pt.y() + spaclen);
+
+		osgUtil::IntersectionVisitor iv(intersector);
+
+		osg::Camera* camera = viewer->getCamera();
+		if (!camera) return ;
+		camera->accept(iv);
+			 
+		if (!iv.getIntersector()->containsIntersections() && !intersector->containsIntersections()) {
+			std::cout << "no intersections found" << std::endl;
+			return ;
+		}
+		else
+		{
+			std::cout << "select one." << std::endl;
+			const osgUtil::PolytopeIntersector::Intersection &rst = *intersector->getIntersections().begin();
+
+			TraceLine *shape = dynamic_cast<TraceLine*>(rst.drawable.get()); 
+			if (shape)
+				shape->highlight();
+		}
+		return;
+	}
+};
+
+
 int main(int argc, char **argv)
 {
 	QApplication a(argc, argv);
@@ -176,11 +274,15 @@ int main(int argc, char **argv)
 
 	osg::ref_ptr<osg::Group> root = new osg::Group();
 
+
+	auto shape = new osg::ShapeDrawable(new osg::Box(osg::Vec3(), 2));
+	shape->setColor(osg::Vec4(1.0, 0.0, 0.0, 1.0));
+
 	//root->addChild(node);
 	//root->addChild(axis);
 
+	//root->addChild(shape);
 	root->addChild(traceline);
-
 	osg::DisplaySettings::instance()->setNumMultiSamples(4);
 
 	QMainWindow main;
@@ -198,13 +300,10 @@ int main(int argc, char **argv)
 	layer.addWidget(&viewer);
 
 	osg::ref_ptr<GeoSceneCamera> geocam = new GeoSceneCamera;
-	osg::ref_ptr<COCSGroundManipulator>	gcam = new COCSGroundManipulator;
-	center.z() = 1.0f;
-	geocam->setCameraPos(center);
-	gcam->setCenter(center);
+	centerpt.z() = 1.0f;
+	geocam->setCameraPos(centerpt);
 	viewer.getOsgViewer()->setCameraManipulator(geocam);
-	//viewer.getOsgViewer()->setCameraManipulator(gcam);
- 
+	viewer.getOsgViewer()->addEventHandler(new ObjectSelectHandler());
 
 	float ratio = viewer.width() / viewer.height();
 

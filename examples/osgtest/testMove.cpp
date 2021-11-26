@@ -86,9 +86,9 @@ protected:
         constexpr int   quadsz   = (len - 1) * (len - 1);
         static_assert( len , "len value error.");
 
-        osg::ref_ptr<osg::Vec3dArray>           vex             = new osg::Vec3dArray;
+        osg::ref_ptr<osg::Vec3Array>           vex             = new osg::Vec3Array;
         osg::ref_ptr<osg::Vec4Array>            colors          = new osg::Vec4Array;
-        osg::ref_ptr<osg::DrawElementsUShort>   primitiveSet    = new osg::DrawElementsUShort(osg::PrimitiveSet::POINTS);
+        osg::ref_ptr<osg::DrawElementsUShort>   primitiveSet    = new osg::DrawElementsUShort(osg::PrimitiveSet::TRIANGLES);
         for( int i = 0; i <= len; ++i)
         {
             float row = -totalLen + i * stride;
