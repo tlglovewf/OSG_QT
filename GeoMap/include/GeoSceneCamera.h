@@ -16,7 +16,14 @@ typedef osg::Vec3 MecPos;
 class GeoSceneCamera : public osgGA::CameraManipulator
 {
 public:
-	enum MouseMode
+
+	enum class CameraType
+	{
+	   eFirstMode,
+	   eThirdMode
+	};
+
+	enum class MouseMode
 	{
 	   	eMapPan,
 		eMapSelect
@@ -31,7 +38,7 @@ public:
 	{
 		mCamPt = pos;
 		mOriPt = pos;
-		updateCamera();
+		updateTrans();
 	}
 
 
@@ -62,23 +69,35 @@ public:
 
 	//世界坐标转经纬度坐标
 	osg::Vec3 worldToView(osg::ref_ptr<osg::Camera> cam, const osg::Vec3 &wdpt);
+
+	//设置相机类型
+	void setCameraType(CameraType type) {
+		mType = type;
+	}
 protected:
 	//更新相机
-	void updateCamera();
+	void updateTrans();
 	//回归初始位置
 	void setOrigin();
 protected:
-	MouseMode mMode = eMapPan;
+	MouseMode  mMode = MouseMode::eMapPan;
+	CameraType mType = CameraType::eFirstMode;
 
 	bool mLftBtnDwn = false;
+	bool mRhtBtnDwn = false;
 
 	osg::Vec2       mLftPt;
+	osg::Vec2       mRhtPt;
 
 	osg::Vec3 mCamPt;		//当前相机位置
+	osg::Vec3 mObjPt;		//目标位置
 	osg::Vec3 mOriPt;		//记录初始位置
+	osg::Vec3 mLstPt;		//记录上次位置
+	osg::Quat mLstRt;		//记录上次旋转
 	osg::Vec3 mMapCenter;	//当前地图中心
 
 	osg::Matrixd mTrans;	//转换矩阵
+	osg::Quat	 mRot;		//旋转
 };
 
 #endif

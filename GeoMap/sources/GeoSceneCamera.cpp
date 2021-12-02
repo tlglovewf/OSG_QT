@@ -1,26 +1,33 @@
 #include "GeoSceneCamera.h"
 #include "osgViewer/Viewer"
+#include "osgUtil/LineSegmentIntersector"
 #include <qdebug.h>
 
-void GeoSceneCamera::updateCamera()
-{
-	mTrans.makeTranslate(mCamPt);
+void GeoSceneCamera::updateTrans()
+{	
+	mTrans.setTrans(mObjPt - mCamPt );
 }
 
 void GeoSceneCamera::setOrigin()
 {
 	mCamPt = mOriPt;
+	mObjPt.set(0.0, 0.0, 0.0);
+	mTrans.makeIdentity();
 	mTrans.makeTranslate(mCamPt);
+	mRot = osg::Quat();
 }
 
 osg::Matrixd GeoSceneCamera::getMatrix()const
 {
-	return mTrans;
+	return mTrans; 
 }
 
 osg::Matrixd GeoSceneCamera::getInverseMatrix()const
 {
-	return osg::Matrixd::inverse(getMatrix());
+	if (mType == CameraType::eThirdMode)
+		return osg::Matrixd::rotate(mRot) * osg::Matrixd::translate(-mCamPt);
+	else
+		return osg::Matrixd::translate(-mCamPt) * osg::Matrixd::rotate(mRot) ;
 }
 
 
@@ -81,33 +88,23 @@ bool GeoSceneCamera::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAd
 		{//DOWN
 			mCamPt.z() -= det;
 		}
-		if (mCamPt.z() < 0.1)
-		{
-			mCamPt.z() = 0.1;
-		}
-		osg::Camera *cam = view->getCamera();
-		osg::Vec2 temp(ea.getX(), ea.getY());
-		osg::Vec3 pt1 = viewToWolrd(cam, osg::Vec3(temp.x(), temp.y(), 0.0));
-		
-		osg::Vec3 dis = pt1 - mCamPt;
-
-		mCamPt.x() += dis.x()/ 10.0;
-		mCamPt.y() += dis.y()/ 10.0;
-
-		mTrans.makeTranslate(mCamPt);
 	}
 	break;
 	case osgGA::GUIEventAdapter::PUSH:
 	{
+		
+		mLstPt = mCamPt;
+		mLstRt = mRot;
 		switch (ea.getButtonMask())
 		{
-		//case osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON:
-		//{
-		//	mRhtBtnDwn = true;
-		//	mRhtPt.x() = ea.getX();
-		//	mRhtPt.y() = ea.getY();
-		//}
-		//break;
+		case osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON:
+		{
+			mRhtBtnDwn = true;
+			mRhtPt.x() = ea.getX();
+			mRhtPt.y() = ea.getY();
+			
+		}
+		break;
 		case osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON:
 		{
 			mLftBtnDwn = true;
@@ -132,15 +129,12 @@ bool GeoSceneCamera::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAd
 		{
 			if (mLftBtnDwn)
 			{
-				mCamPt = mTrans.getTrans();
-
 				mLftBtnDwn = false;
 			}
-			//else if (mRhtBtnDwn)
-			//{
-			//	mQRot = mRotate.getRotate();
-			//	mRhtBtnDwn = false;
-			//}
+			else if (mRhtBtnDwn)
+			{
+				mRhtBtnDwn = false;
+			}
 			else
 			{
 				;
@@ -150,11 +144,11 @@ bool GeoSceneCamera::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAd
 		}
 		switch (ea.getButtonMask())
 		{
-		//case osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON:
-		//{
-		//	mRhtBtnDwn = false;
-		//}
-		//break;
+		case osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON:
+		{
+			mRhtBtnDwn = false;
+		}
+		break;
 		case osgGA::GUIEventAdapter::LEFT_MOUSE_BUTTON:
 		{
 			mLftBtnDwn = false;
@@ -173,37 +167,68 @@ bool GeoSceneCamera::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAd
 	case osgGA::GUIEventAdapter::DRAG:
 	{
 		osg::Vec2 temp(ea.getX(), ea.getY());
-		//if (mRhtBtnDwn)
-		//{
-		//	osg::Quat rotX;
-		//	osg::Quat rotY;
-		//
-		//	osg::Vec2 det = (temp - mRhtPt);
-		//
-		//	constexpr float scale = 100.0f;
-		//	rotX.makeRotate(det.y() / scale, osg::Vec3(1, 0, 0));
-		//	rotY.makeRotate(det.x() / scale, osg::Vec3(0, 1, 0));
-		//
-		//	auto change = mQRot * rotX * rotY;
-		//
-		//	mRotate.makeRotate(change);
-		//}
+		if (mRhtBtnDwn)
+		{
+			osg::Quat rotX;
+			osg::Quat rotZ;
+
+			osg::Camera *cam = view->getCamera();
+			
+			osg::Vec2 det = (temp - mRhtPt);
+		
+			constexpr float scale = 2.0;//
+			float h = (mRhtPt.x() - 0) * scale;
+			
+
+			if (mType == CameraType::eThirdMode)
+			{
+				
+				osg::Vec3 xaxis(1.0, 0.0, 0.0);
+				osg::Vec3 zaxis(0.0, 0.0, 1.0);
+
+				osg::Quat rotX;
+				osg::Quat rotY;
+				rotX.makeRotate(scale * det.y() / h, xaxis);
+				rotY.makeRotate(scale * det.x() / h, zaxis);
+
+				mRot = mLstRt * rotX * rotY;
+
+			}
+			else
+			{
+				osg::Vec3 xaxis(1.0, 0.0, 0.0);
+				osg::Vec3 yaxis(0.0, 1.0, 0.0);
+
+				osg::Quat rotX;
+				osg::Quat rotY;
+				rotX.makeRotate(scale * det.y() / h, xaxis);
+				rotY.makeRotate(scale * det.x() / h, yaxis);
+
+				mRot = mLstRt * rotX * rotY;
+				 
+			}
+			
+		}
 
 		if (mLftBtnDwn)
 		{
 			osg::Camera *cam = view->getCamera();
-			osg::Vec3 panPt(mCamPt);
+			
 
 			osg::Vec3 pt1 = viewToWolrd(cam, osg::Vec3(temp.x(), temp.y(), 0.0));
 
 			osg::Vec3 pt2 = viewToWolrd(cam, osg::Vec3(mLftPt.x(), mLftPt.y(), 0.0));
 
 			osg::Vec3 det = pt1 - pt2;
-
-			panPt.x() = mCamPt.x() - det.x();
-			panPt.y() = mCamPt.y() - det.y();
-
-			mTrans.makeTranslate(panPt);
+			qDebug() << det.x() << " " << det.y() << " " << det.z() << endl;
+			if (mType == CameraType::eFirstMode)
+			{
+				mCamPt = mLstPt -  det ;
+			}
+			else
+			{
+				mCamPt = mLstPt - mRot * osg::Vec3(det.x(), det.y(), 0);
+			}
 		}
 	}
 	break;

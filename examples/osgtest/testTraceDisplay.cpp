@@ -15,6 +15,7 @@
 #include <osg/LineSegment>
 
 #include "OSGViewWidget"
+#include "osg/Transform"
 //#include "SceneCameraManipulator.h"
 
 #include "GeoSceneCamera.h"
@@ -149,7 +150,6 @@ protected:
 	}
 
 };
-
 class Chess : public osg::Geometry
 {
 public:
@@ -163,7 +163,6 @@ protected:
 
 	void build_mesh()
 	{
-
 		constexpr float totalLen = 300;
 		constexpr float stride = 30;
 		constexpr int   len = (int)(totalLen / stride) << 1;
@@ -172,17 +171,20 @@ protected:
 
 		osg::ref_ptr<osg::Vec3Array>           vex = new osg::Vec3Array;
 		osg::ref_ptr<osg::Vec4Array>            colors = new osg::Vec4Array;
-		osg::ref_ptr<osg::DrawElementsUShort>   primitiveSet = new osg::DrawElementsUShort(osg::PrimitiveSet::TRIANGLES);
+		osg::ref_ptr<osg::DrawElementsUShort>   primitiveSet = new osg::DrawElementsUShort(osg::PrimitiveSet::POINTS);
+		for (int i = 0; i <= len; ++i)
+		{
+			float row = -totalLen + i * stride;
 
-		vex->push_back({ -1,-1,0 });
-		vex->push_back({ 1, 1,0 });
-		vex->push_back({ 1,-1,0 });
-		colors->push_back({ 1.0, 0.0, 0.0, 1.0 });
-		colors->push_back({ 0.0, 1.0, 0.0, 1.0 });
-		colors->push_back({ 0.0, 0.0, 1.0, 1.0 });
-		primitiveSet->push_back(0);
-		primitiveSet->push_back(1);
-		primitiveSet->push_back(2);
+			for (int j = 0; j <= len; ++j)
+			{
+				float col = -totalLen + j * stride;
+				vex->push_back(osg::Vec3(row, col, 0));
+				colors->push_back(osg::Vec4(1, 0, 0, 1));
+				int index = primitiveSet->size();
+				primitiveSet->push_back(index);
+			}
+		}
 
 		this->setVertexArray(vex);
 		this->setColorArray(colors);
@@ -194,11 +196,56 @@ protected:
 		osg::ref_ptr<osg::LineWidth> linewidth = new osg::LineWidth(3);
 		this->getOrCreateStateSet()->setAttribute(linewidth, osg::StateAttribute::ON);
 		this->getOrCreateStateSet()->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+
 		this->getOrCreateStateSet()->setMode(GL_LINE_SMOOTH, osg::StateAttribute::ON);
-		this->getOrCreateStateSet()->setAttribute(new osg::Point(5));
+		this->getOrCreateStateSet()->setAttribute(new osg::Point(3));
 	}
 
 protected:
+};
+
+class BackPlane : public osg::Geometry
+{
+public:
+	BackPlane()
+	{
+		build_mesh();
+	}
+
+protected:
+	void build_mesh()
+	{
+		constexpr float totalLen = 1000;
+
+		osg::ref_ptr<osg::Vec3Array>           vex = new osg::Vec3Array;
+		osg::ref_ptr<osg::Vec4Array>            colors = new osg::Vec4Array;
+		osg::ref_ptr<osg::DrawElementsUShort>   primitiveSet = new osg::DrawElementsUShort(osg::PrimitiveSet::TRIANGLES);
+	
+		vex->push_back({ -totalLen,  totalLen,0 });
+		vex->push_back({ -totalLen, -totalLen,0 });
+		vex->push_back({  totalLen, -totalLen,0 });
+		vex->push_back({  totalLen,  totalLen,0 });
+
+		primitiveSet->push_back(0);
+		primitiveSet->push_back(1);
+		primitiveSet->push_back(2);
+		primitiveSet->push_back(0);
+		primitiveSet->push_back(2);
+		primitiveSet->push_back(3);
+
+		colors->push_back({ 0.1,1.0,0.0,0.4 });
+
+
+		this->setVertexArray(vex);
+		this->setColorArray(colors);
+
+		this->setColorBinding(osg::Geometry::BIND_OVERALL);
+
+		addPrimitiveSet(primitiveSet);
+
+		this->getOrCreateStateSet()->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+		this->getOrCreateStateSet()->setMode(GL_BLEND, osg::StateAttribute::ON);
+	}
 };
 
 class ObjectSelectHandler : public osgGA::GUIEventHandler
@@ -235,9 +282,11 @@ public:
 
 	void pick(osgViewer::View *viewer, const osg::Vec2 pt)
 	{
+		return;
 		constexpr float spaclen = 5;
-		osgUtil::PolytopeIntersector *intersector = new osgUtil::PolytopeIntersector(osgUtil::Intersector::WINDOW, pt.x() - spaclen, pt.y() - spaclen, pt.x() + spaclen, pt.y() + spaclen);
-
+		//osgUtil::PolytopeIntersector *intersector = new osgUtil::PolytopeIntersector(osgUtil::Intersector::WINDOW, pt.x() - spaclen, pt.y() - spaclen, pt.x() + spaclen, pt.y() + spaclen);
+		osgUtil::LineSegmentIntersector *intersector = new osgUtil::LineSegmentIntersector(osgUtil::Intersector::WINDOW, pt.x(), pt.y());
+		qDebug() << "-- " << pt.x() << " " << pt.y() << endl;
 		osgUtil::IntersectionVisitor iv(intersector);
 
 		osg::Camera* camera = viewer->getCamera();
@@ -251,11 +300,14 @@ public:
 		else
 		{
 			std::cout << "select one." << std::endl;
-			const osgUtil::PolytopeIntersector::Intersection &rst = *intersector->getIntersections().begin();
-
-			TraceLine *shape = dynamic_cast<TraceLine*>(rst.drawable.get()); 
-			if (shape)
-				shape->highlight();
+			//const osgUtil::PolytopeIntersector::Intersection &rst = *intersector->getIntersections().begin();
+			const osgUtil::LineSegmentIntersector::Intersection &rst = *intersector->getIntersections().begin();
+			//TraceLine *shape = dynamic_cast<TraceLine*>(rst.drawable.get()); 
+			//if (shape)
+			//	shape->highlight();
+ 
+			qDebug() << rst.getWorldIntersectPoint().x() << " " << rst.getWorldIntersectPoint().y() << " " << rst.getWorldIntersectPoint().z() << endl;
+			
 		}
 		return;
 	}
@@ -266,7 +318,7 @@ int main(int argc, char **argv)
 {
 	QApplication a(argc, argv);
 
-	osg::ref_ptr<Chess> node = new Chess();
+	osg::ref_ptr<Chess> chess = new Chess();
 
 	osg::ref_ptr<Axis>  axis = new Axis();
 
@@ -274,18 +326,23 @@ int main(int argc, char **argv)
 
 	osg::ref_ptr<osg::Group> root = new osg::Group();
 
+	osg::ref_ptr<osg::Transform> transnode = new osg::Transform;
+	//transnode->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
+	transnode->addChild(axis);
 
 	auto shape = new osg::ShapeDrawable(new osg::Box(osg::Vec3(), 2));
 	shape->setColor(osg::Vec4(1.0, 0.0, 0.0, 1.0));
+	auto plane = new BackPlane();
 
-	//root->addChild(node);
-	//root->addChild(axis);
-
-	//root->addChild(shape);
+	root->addChild(plane);
+	root->addChild(chess);
+	root->addChild(transnode);
+	root->addChild(shape);
 	root->addChild(traceline);
 	osg::DisplaySettings::instance()->setNumMultiSamples(4);
 
 	QMainWindow main;
+	main.setFixedSize(QSize(1024, 720));
 	QVBoxLayout layer;
 	main.setCentralWidget(new QWidget);
 	main.centralWidget()->setLayout(&layer);
@@ -300,7 +357,8 @@ int main(int argc, char **argv)
 	layer.addWidget(&viewer);
 
 	osg::ref_ptr<GeoSceneCamera> geocam = new GeoSceneCamera;
-	centerpt.z() = 1.0f;
+	geocam->setCameraType(GeoSceneCamera::CameraType::eThirdMode);
+	centerpt.z() = 100.0f;
 	geocam->setCameraPos(centerpt);
 	viewer.getOsgViewer()->setCameraManipulator(geocam);
 	viewer.getOsgViewer()->addEventHandler(new ObjectSelectHandler());
