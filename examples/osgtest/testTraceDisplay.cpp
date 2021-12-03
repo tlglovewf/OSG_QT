@@ -27,6 +27,7 @@
 
 #include <QDebug>
 
+constexpr int Radius_Len = 1e4;
 class Axis : public osg::Geometry
 {
 public:
@@ -150,6 +151,7 @@ protected:
 	}
 
 };
+
 class Chess : public osg::Geometry
 {
 public:
@@ -163,24 +165,24 @@ protected:
 
 	void build_mesh()
 	{
-		constexpr float totalLen = 300;
-		constexpr float stride = 30;
+		constexpr float totalLen = Radius_Len;
+		constexpr float stride = 100;
 		constexpr int   len = (int)(totalLen / stride) << 1;
-		constexpr int   quadsz = (len - 1) * (len - 1);
 		static_assert(len, "len value error.");
 
 		osg::ref_ptr<osg::Vec3Array>           vex = new osg::Vec3Array;
 		osg::ref_ptr<osg::Vec4Array>            colors = new osg::Vec4Array;
-		osg::ref_ptr<osg::DrawElementsUShort>   primitiveSet = new osg::DrawElementsUShort(osg::PrimitiveSet::POINTS);
+		
+		osg::ref_ptr<osg::DrawElementsUInt>   primitiveSet = new osg::DrawElementsUInt(osg::PrimitiveSet::POINTS);
 		for (int i = 0; i <= len; ++i)
 		{
 			float row = -totalLen + i * stride;
 
-			for (int j = 0; j <= len; ++j)
+			for (int j = 0; j <=  len; ++j)
 			{
 				float col = -totalLen + j * stride;
 				vex->push_back(osg::Vec3(row, col, 0));
-				colors->push_back(osg::Vec4(1, 0, 0, 1));
+				colors->push_back(osg::Vec4(0, 0.8, 0, 1));
 				int index = primitiveSet->size();
 				primitiveSet->push_back(index);
 			}
@@ -215,7 +217,7 @@ public:
 protected:
 	void build_mesh()
 	{
-		constexpr float totalLen = 1000;
+		constexpr float totalLen = Radius_Len;
 
 		osg::ref_ptr<osg::Vec3Array>           vex = new osg::Vec3Array;
 		osg::ref_ptr<osg::Vec4Array>            colors = new osg::Vec4Array;
@@ -244,6 +246,7 @@ protected:
 		addPrimitiveSet(primitiveSet);
 
 		this->getOrCreateStateSet()->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+		this->getOrCreateStateSet()->setMode(GL_DEPTH_TEST, osg::StateAttribute::OFF);
 		this->getOrCreateStateSet()->setMode(GL_BLEND, osg::StateAttribute::ON);
 	}
 };
@@ -339,7 +342,7 @@ int main(int argc, char **argv)
 	root->addChild(transnode);
 	root->addChild(shape);
 	root->addChild(traceline);
-	osg::DisplaySettings::instance()->setNumMultiSamples(4);
+	osg::DisplaySettings::instance()->setNumMultiSamples(8);
 
 	QMainWindow main;
 	main.setFixedSize(QSize(1024, 720));
@@ -357,7 +360,7 @@ int main(int argc, char **argv)
 	layer.addWidget(&viewer);
 
 	osg::ref_ptr<GeoSceneCamera> geocam = new GeoSceneCamera;
-	geocam->setCameraType(GeoSceneCamera::CameraType::eThirdMode);
+	//geocam->setCameraType(GeoSceneCamera::CameraType::eThirdMode);
 	centerpt.z() = 100.0f;
 	geocam->setCameraPos(centerpt);
 	viewer.getOsgViewer()->setCameraManipulator(geocam);
@@ -366,7 +369,6 @@ int main(int argc, char **argv)
 	float ratio = viewer.width() / viewer.height();
 
 	viewer.getOsgViewer()->getCamera()->getProjectionMatrix().makePerspective(45.0f, ratio, 1, 1000);
-    
 
 	main.show();
 

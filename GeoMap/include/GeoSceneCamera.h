@@ -29,7 +29,7 @@ public:
 		eMapSelect
 	};
 	
-	GeoSceneCamera()
+	GeoSceneCamera():mUp(0.0, 1.0, 0.0)
 	{
 
 	}
@@ -38,7 +38,6 @@ public:
 	{
 		mCamPt = pos;
 		mOriPt = pos;
-		updateTrans();
 	}
 
 
@@ -75,8 +74,6 @@ public:
 		mType = type;
 	}
 protected:
-	//更新相机
-	void updateTrans();
 	//回归初始位置
 	void setOrigin();
 protected:
@@ -93,6 +90,7 @@ protected:
 	osg::Vec3 mObjPt;		//目标位置
 	osg::Vec3 mOriPt;		//记录初始位置
 	osg::Vec3 mLstPt;		//记录上次位置
+	osg::Vec3 mUp;			//默认上方向
 	osg::Quat mLstRt;		//记录上次旋转
 	osg::Vec3 mMapCenter;	//当前地图中心
 

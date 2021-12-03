@@ -1,12 +1,7 @@
 #include "GeoSceneCamera.h"
 #include "osgViewer/Viewer"
-#include "osgUtil/LineSegmentIntersector"
+#include "osgUtil/RayIntersector"
 #include <qdebug.h>
-
-void GeoSceneCamera::updateTrans()
-{	
-	mTrans.setTrans(mObjPt - mCamPt );
-}
 
 void GeoSceneCamera::setOrigin()
 {
@@ -15,6 +10,7 @@ void GeoSceneCamera::setOrigin()
 	mTrans.makeIdentity();
 	mTrans.makeTranslate(mCamPt);
 	mRot = osg::Quat();
+	mUp = osg::Vec3(0, 1, 0);
 }
 
 osg::Matrixd GeoSceneCamera::getMatrix()const
@@ -25,7 +21,11 @@ osg::Matrixd GeoSceneCamera::getMatrix()const
 osg::Matrixd GeoSceneCamera::getInverseMatrix()const
 {
 	if (mType == CameraType::eThirdMode)
-		return osg::Matrixd::rotate(mRot) * osg::Matrixd::translate(-mCamPt);
+	{
+		osg::Matrixd mat;
+		mat.makeLookAt(mCamPt, mObjPt, mUp);
+		return mat;
+	}
 	else
 		return osg::Matrixd::translate(-mCamPt) * osg::Matrixd::rotate(mRot) ;
 }
@@ -44,6 +44,10 @@ osg::Vec3 GeoSceneCamera::viewToWolrd(osg::ref_ptr<osg::Camera> cam, const osg::
 
 		osg::Matrix vpotmtrx = cam->getViewport()->computeWindowMatrix();
 
+		osg::Vec4 temp = { viewpt,1.0 };
+		
+		temp = temp * osg::Matrix::inverse(viewmtrx * projmtrx * vpotmtrx);
+
 		return viewpt * osg::Matrix::inverse(viewmtrx * projmtrx * vpotmtrx);
 	}
 	else
@@ -58,18 +62,38 @@ osg::Vec3 GeoSceneCamera::worldToView(osg::ref_ptr<osg::Camera> cam, const osg::
 	if (cam.valid())
 	{
 		osg::Matrix viewmtrx = cam->getViewMatrix();
-
+		osg::Vec4 temp = { wdpt, 1.0 };
+		temp = temp * viewmtrx;
 		osg::Matrix projmtrx = cam->getProjectionMatrix();
-
+		temp = temp * projmtrx;
 		osg::Matrix vpotmtrx = cam->getViewport()->computeWindowMatrix();
-
-		return wdpt * viewmtrx * projmtrx * vpotmtrx;
+		temp = temp * vpotmtrx;
+		return { temp.x(), temp.y(), temp.z() };
 	}
 	else
 	{
 		return osg::Vec3();
 	}
 }
+
+osg::Vec3  GetWorldPtFromViewPoint(osg::Camera *cam, int x, int y)
+{
+	osg::ref_ptr<osgUtil::RayIntersector> rayline = new osgUtil::RayIntersector(osgUtil::Intersector::WINDOW, x, y);
+	osgUtil::IntersectionVisitor iv;
+	iv.setIntersector(rayline);
+	cam->accept(iv);
+	
+	if (!iv.getIntersector()->containsIntersections() && !rayline->containsIntersections())
+	{
+		return osg::Vec3();
+	}
+	else
+	{
+		const osgUtil::RayIntersector::Intersection &rst = *rayline->getIntersections().begin();
+		return rst.getWorldIntersectPoint();
+	}
+}
+
 
 //处理事件
 bool GeoSceneCamera::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAdapter& us)
@@ -79,14 +103,16 @@ bool GeoSceneCamera::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAd
 	{
 	case osgGA::GUIEventAdapter::SCROLL:
 	{
-		float det = mCamPt.z() / 10.0;
+		auto dir = mObjPt - mCamPt;
+		float len = dir.normalize();
+		float det = len / 10.0;
 		if (ea.getScrollingMotion() == osgGA::GUIEventAdapter::SCROLL_UP)
 		{//UP
-			mCamPt.z() += det;
+			mCamPt += dir * det;
 		}
 		else
 		{//DOWN
-			mCamPt.z() -= det;
+			mCamPt -= dir * det;
 		}
 	}
 	break;
@@ -169,14 +195,9 @@ bool GeoSceneCamera::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAd
 		osg::Vec2 temp(ea.getX(), ea.getY());
 		if (mRhtBtnDwn)
 		{
-			osg::Quat rotX;
-			osg::Quat rotZ;
-
-			osg::Camera *cam = view->getCamera();
-			
 			osg::Vec2 det = (temp - mRhtPt);
 		
-			constexpr float scale = 2.0;//
+			constexpr float scale = 1.0;//
 			float h = (mRhtPt.x() - 0) * scale;
 			
 
@@ -188,10 +209,17 @@ bool GeoSceneCamera::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAd
 
 				osg::Quat rotX;
 				osg::Quat rotY;
-				rotX.makeRotate(scale * det.y() / h, xaxis);
 				rotY.makeRotate(scale * det.x() / h, zaxis);
 
-				mRot = mLstRt * rotX * rotY;
+				auto dir = mObjPt - mLstPt;
+				float len = dir.normalize();
+				auto preUp = mUp;
+				mUp = rotY * mLstRt.inverse() * mUp;
+				mLstRt = rotY;
+				osg::Quat qua;
+				auto tem = dir ^ preUp;
+				rotX.makeRotate(scale * det.y() / h, tem);
+				mCamPt = mObjPt - rotX * dir * len;
 
 			}
 			else
@@ -205,7 +233,6 @@ bool GeoSceneCamera::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAd
 				rotY.makeRotate(scale * det.x() / h, yaxis);
 
 				mRot = mLstRt * rotX * rotY;
-				 
 			}
 			
 		}
@@ -214,20 +241,33 @@ bool GeoSceneCamera::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAd
 		{
 			osg::Camera *cam = view->getCamera();
 			
+			auto pt1 = GetWorldPtFromViewPoint(cam, temp.x(), temp.y());
+			auto pt2 = GetWorldPtFromViewPoint(cam, mLftPt.x(), mLftPt.y());
 
-			osg::Vec3 pt1 = viewToWolrd(cam, osg::Vec3(temp.x(), temp.y(), 0.0));
-
-			osg::Vec3 pt2 = viewToWolrd(cam, osg::Vec3(mLftPt.x(), mLftPt.y(), 0.0));
-
+			if (pt1.length() < 1e-6 || pt2.length() < 1e-6)
+			{
+				qDebug() << "no object selected." << endl;
+				return true;
+			}
 			osg::Vec3 det = pt1 - pt2;
-			qDebug() << det.x() << " " << det.y() << " " << det.z() << endl;
+		
 			if (mType == CameraType::eFirstMode)
 			{
 				mCamPt = mLstPt -  det ;
 			}
 			else
 			{
-				mCamPt = mLstPt - mRot * osg::Vec3(det.x(), det.y(), 0);
+				auto movpt = osg::Vec3(det.x(), det.y(), 0);
+				
+				auto dir = mObjPt - mCamPt;
+				auto len = dir.normalize();
+
+				auto left = dir ^ osg::Vec3(0.0, 1.0, 0.0);
+				auto up = left ^ dir;
+
+				mCamPt = mLstPt - left * det.x()  - up * det.y() ;
+
+				mObjPt = mCamPt + dir * len;
 			}
 		}
 	}
