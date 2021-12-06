@@ -203,7 +203,6 @@ bool GeoSceneCamera::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAd
 
 			if (mType == CameraType::eThirdMode)
 			{
-				
 				osg::Vec3 xaxis(1.0, 0.0, 0.0);
 				osg::Vec3 zaxis(0.0, 0.0, 1.0);
 
@@ -214,7 +213,7 @@ bool GeoSceneCamera::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAd
 				auto dir = mObjPt - mLstPt;
 				float len = dir.normalize();
 				auto preUp = mUp;
-				mUp = rotY * mLstRt.inverse() * mUp;
+				mUp = rotX * rotY * mLstRt.inverse() * mUp;
 				mLstRt = rotY;
 				osg::Quat qua;
 				auto tem = dir ^ preUp;
@@ -262,10 +261,7 @@ bool GeoSceneCamera::handle(const osgGA::GUIEventAdapter& ea, osgGA::GUIActionAd
 				auto dir = mObjPt - mCamPt;
 				auto len = dir.normalize();
 
-				auto left = dir ^ osg::Vec3(0.0, 1.0, 0.0);
-				auto up = left ^ dir;
-
-				mCamPt = mLstPt - left * det.x()  - up * det.y() ;
+				mCamPt = mLstPt - det;
 
 				mObjPt = mCamPt + dir * len;
 			}

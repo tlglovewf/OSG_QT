@@ -360,7 +360,7 @@ int main(int argc, char **argv)
 	layer.addWidget(&viewer);
 
 	osg::ref_ptr<GeoSceneCamera> geocam = new GeoSceneCamera;
-	//geocam->setCameraType(GeoSceneCamera::CameraType::eThirdMode);
+	geocam->setCameraType(GeoSceneCamera::CameraType::eThirdMode);
 	centerpt.z() = 100.0f;
 	geocam->setCameraPos(centerpt);
 	viewer.getOsgViewer()->setCameraManipulator(geocam);
