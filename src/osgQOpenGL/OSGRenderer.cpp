@@ -187,11 +187,27 @@ void OSGRenderer::setupOSG(int windowWidth, int windowHeight, float windowScale)
 {
     m_osgInitialized = true;
     m_windowScale = windowScale;
-    m_osgWinEmb = new osgViewer::GraphicsWindowEmbedded(0, 0,
-                                                        windowWidth * windowScale, windowHeight * windowScale);
+
+	osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits;
+	traits->x = 0;
+	traits->y = 0;
+	traits->red = 8;
+	traits->green = 8;
+	traits->blue = 8;
+	traits->alpha = 8;
+	traits->width  = windowWidth  * windowScale;
+	traits->height = windowHeight * windowScale;
+	traits->samples = 16;
+	traits->sampleBuffers = 1;
+	//支持双缓存，默认不支持
+	traits->doubleBuffer = true;
+	//支持窗口扩展，默认是不支持的
+	traits->windowDecoration = true;
+    m_osgWinEmb = new osgViewer::GraphicsWindowEmbedded(traits);
     //m_osgWinEmb = new osgViewer::GraphicsWindowEmbedded(0, 0, windowWidth * windowScale, windowHeight * windowScale);
     // make sure the event queue has the correct window rectangle size and input range
     m_osgWinEmb->getEventQueue()->syncWindowRectangleWithGraphicsContext();
+
     _camera->setViewport(new osg::Viewport(0, 0, windowWidth * windowScale,
                                            windowHeight * windowScale));
     _camera->setGraphicsContext(m_osgWinEmb.get());

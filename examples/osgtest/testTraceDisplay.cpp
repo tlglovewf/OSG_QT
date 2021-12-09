@@ -2,7 +2,9 @@
 #include <osgViewer/Viewer>
 #include <QApplication>
 #include <osg/Geometry>
+#include <osg/MatrixTransform>
 #include <osg/Point>
+#include <osg/Multisample>
 #include <osg/LineWidth>
 #include <osgGA/GUIEventHandler>
 #include <osgGA/CameraManipulator>
@@ -11,7 +13,7 @@
 #include <osgFX/OutLine>
 #include <osgUtil/LineSegmentIntersector>
 #include <osg/ShapeDrawable>
-
+#include <osgText/Text>
 #include <osg/LineSegment>
 
 #include "OSGViewWidget"
@@ -317,8 +319,30 @@ public:
 };
 
 
+
+
 int main(int argc, char **argv)
-{
+{	 
+	QSurfaceFormat format = QSurfaceFormat::defaultFormat();
+
+#ifdef OSG_GL3_AVAILABLE
+	format.setVersion(3, 2);
+	format.setProfile(QSurfaceFormat::CoreProfile);
+	format.setRenderableType(QSurfaceFormat::OpenGL);
+	format.setOption(QSurfaceFormat::DebugContext);
+#else
+	format.setVersion(2, 0);
+	format.setProfile(QSurfaceFormat::CompatibilityProfile);
+	format.setRenderableType(QSurfaceFormat::OpenGL);
+	format.setOption(QSurfaceFormat::DebugContext);
+#endif
+	format.setDepthBufferSize(24);
+	//format.setAlphaBufferSize(8);0,
+	format.setSamples(16);
+	format.setStencilBufferSize(8);
+	format.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
+	QSurfaceFormat::setDefaultFormat(format);
+
 	QApplication a(argc, argv);
 
 	osg::ref_ptr<Chess> chess = new Chess();
@@ -328,11 +352,12 @@ int main(int argc, char **argv)
 	osg::ref_ptr<TraceLine> traceline = new TraceLine();
 
 	osg::ref_ptr<osg::Group> root = new osg::Group();
-
-	osg::ref_ptr<osg::Transform> transnode = new osg::Transform;
-	//transnode->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
+	osg::Multisample* pms = new osg::Multisample;
+	pms->setSampleCoverage(1, true);
+	root->getOrCreateStateSet()->setAttribute(pms, osg::StateAttribute::ON);
+	osg::ref_ptr<osg::MatrixTransform> transnode = new osg::MatrixTransform();
 	transnode->addChild(axis);
-
+	transnode->setMatrix(osg::Matrix::rotate(30, osg::Vec3d(0, 0, 1.0)));
 	auto shape = new osg::ShapeDrawable(new osg::Box(osg::Vec3(), 2));
 	shape->setColor(osg::Vec4(1.0, 0.0, 0.0, 1.0));
 	auto plane = new BackPlane();
@@ -343,6 +368,32 @@ int main(int argc, char **argv)
 	root->addChild(shape);
 	root->addChild(traceline);
 	osg::DisplaySettings::instance()->setNumMultiSamples(8);
+
+	osg::ref_ptr<osg::Camera> camera = new osg::Camera();
+	camera->setProjectionMatrix(osg::Matrix::ortho2D(-512, 512, -360, 360));
+	camera->setReferenceFrame(osg::Transform::ABSOLUTE_RF);
+	camera->setViewMatrix(osg::Matrix::identity());
+	camera->setClearMask(GL_DEPTH_BUFFER_BIT);
+	camera->setAllowEventFocus(false);
+	camera->setRenderOrder(osg::Camera::POST_RENDER);
+	auto text = new osgText::Text;
+	//auto font = osgText::readFontFile("C:/Windows/Fonts/SIMYOU.TTF");	  ÐèÒª±àÒëosgdb_freetype²å¼þ¿â
+	//text->setFont(font);
+	text->setCharacterSize(16);
+	text->setPosition(osg::Vec3(0.0, 10.0f, 0.0f));
+	text->setColor(osg::Vec4(1, 0, 0, 1));
+	text->setDataVariance(osg::Object::DYNAMIC);
+	text->setText(L"Hello World.");
+
+	osg::ref_ptr<osg::Geode> geode = new osg::Geode;
+	geode->addDrawable(text);
+	osg::ref_ptr<osg::StateSet> stateset = geode->getOrCreateStateSet();
+
+	stateset->setMode(GL_LIGHTING, osg::StateAttribute::OFF);
+	stateset->setMode(GL_DEPTH_TEST, osg::StateAttribute::OFF);
+	stateset->setMode(GL_BLEND, osg::StateAttribute::ON);
+	camera->addChild(geode);
+	camera->addChild(transnode);
 
 	QMainWindow main;
 	main.setFixedSize(QSize(1024, 720));
@@ -366,6 +417,7 @@ int main(int argc, char **argv)
 	viewer.getOsgViewer()->setCameraManipulator(geocam);
 	viewer.getOsgViewer()->addEventHandler(new ObjectSelectHandler());
 
+	root->addChild(camera);
 	float ratio = viewer.width() / viewer.height();
 
 	viewer.getOsgViewer()->getCamera()->getProjectionMatrix().makePerspective(45.0f, ratio, 1, 1000);
