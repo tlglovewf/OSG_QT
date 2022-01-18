@@ -318,9 +318,6 @@ public:
 	}
 };
 
-
-
-
 int main(int argc, char **argv)
 {	 
 	QSurfaceFormat format = QSurfaceFormat::defaultFormat();

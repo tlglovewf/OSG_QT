@@ -143,6 +143,8 @@ void osgQOpenGLWidget::keyPressEvent(QKeyEvent* event)
             showNormal();
             setMinimumSize(g);
             QMainWindow* _mainwindow = dynamic_cast<QMainWindow*>(parent());
+            if (_mainwindow == nullptr)
+                return;
             _mainwindow->setCentralWidget(this);
 
             if(layout())

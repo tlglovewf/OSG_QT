@@ -1,4 +1,4 @@
-#include <iostream>
+﻿#include <iostream>
 #include <QApplication>
 #include "OSGViewWidget"
 
@@ -22,14 +22,14 @@ int main(int argc, char **argv)
 
     osg::ref_ptr<osg::TessellationHints> hint = new osg::TessellationHints();
     hint->setDetailRatio(0.8f);
-
+																																		 
     osg::ref_ptr<osg::Geode> node = new osg::Geode();
     osg::Vec4 red(1,1,1,1);
     node->addChild(osg::convertShapeToGeometry(*sp,hint.get(),red));
     
     osg::ref_ptr<osg::Texture2D> texture = new osg::Texture2D(); 
     texture->setDataVariance(osg::Object::DYNAMIC);
-    osg::ref_ptr<osg::Image> img = osgDB::readImageFile("/home/tu/Desktop/skybox.jpeg");
+    osg::ref_ptr<osg::Image> img = osgDB::readImageFile("F:\\Data\\OpenSceneGraph-Data\\Images\\skymap.jpg");
     if(!img.valid())
         return -1;
     texture->setImage(img);
@@ -50,16 +50,15 @@ int main(int argc, char **argv)
 
     OsgViewerWidget viewer(NULL,root);
 
-    osg::ref_ptr<osgText::Font> font = osgText::readFontFile("/home/tu/Downloads/Fonts/simhei.ttf");
+    osg::ref_ptr<osgText::Font> font = osgText::readFontFile("C:/Windows/Fonts/SIMYOU.TTF");
     osg::ref_ptr<osgText::Text> text = new osgText::Text();
 
     text->setCharacterSize(15);
 
     text->setFont(font);
 
-    std::wstring wstr(L"你好么 世界...");
-
-    text->setText(wstr.c_str());
+    /*text->setText(QString::fromLocal8Bit("你好么 世界...").toStdString(),osgText::String::ENCODING_UTF8);*/
+	text->setText(L"你好么 世界...");
     text->setPosition(osg::Vec3( 10, viewer.height() * 0.1,0));
     text->setColor(osg::Vec4(1,0,0,1));
     
